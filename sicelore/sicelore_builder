@@ -1,0 +1,129 @@
+Bootstrap:docker
+From:nfcore/base:1.7
+
+%labels
+	MAINTAINER Per Brattås <per.brattas@med.lu.se>
+	DESCRIPTION Singularity container for SiCeLoRe
+	VERSION 0.0.1
+
+%environment
+	PATH=$PATH:/opt/bin/:/opt/bin/bcftools-1.9/:/opt/bin/samtools-1.9/:/opt/bin/htslib-1.9/:/opt/bin/sicelore/Jar/:/opt/bin/sicelore/Perl/:/opt/bin/sicelore/R:/opt/bin/1.8.0_202/1.8.0_202/:/opt/bin/1.8.0_202/1.8.0_202/bin:
+	export JAVA_HOME=/opt/bin/1.8.0_202/1.8.0_202/bin
+
+%setup
+	mkdir -p ${SINGULARITY_ROOTFS}/opt/bin/1.8.0_202/
+	cp -r /home/per/1.8.0_202/ ${SINGULARITY_ROOTFS}/opt/bin/1.8.0_202/
+	
+%post
+	rm -rf /var/lib/apt/lists/*
+	apt -y clean
+	apt -y update
+	apt -y install libz-dev build-essential gettext cmake libxml2-dev libcurl4-openssl-dev libssl-dev make libbz2-dev libboost-dev  sudo
+
+	apt -y install gcc
+	apt -y install make
+	apt -y install libbz2-dev
+	apt -y install zlib1g-dev
+	apt -y install libncurses5-dev
+	apt -y install libncursesw5-dev
+	apt -y install liblzma-dev
+
+	mkdir -p /opt/bin
+
+	
+	#>> Install HTSLIB
+	cd /opt/bin
+	wget https://github.com/samtools/htslib/releases/download/1.9/htslib-1.9.tar.bz2
+	tar -vxjf htslib-1.9.tar.bz2
+	cd htslib-1.9
+	make
+
+	#>> Install Samtools
+	cd /opt/bin
+	wget https://github.com/samtools/samtools/releases/download/1.9/samtools-1.9.tar.bz2
+	tar -vxjf samtools-1.9.tar.bz2
+	cd samtools-1.9
+	make
+
+	#>> Install BCFTools
+	cd /opt/bin
+	
+	wget https://github.com/samtools/bcftools/releases/download/1.9/bcftools-1.9.tar.bz2
+	tar -vxjf bcftools-1.9.tar.bz2
+	cd bcftools-1.9
+	make
+
+	cp /opt/bin/bcftools-1.9/bcftools /usr/bin
+	cp /opt/bin/samtools-1.9/samtools /usr/bin
+	cp /opt/bin/htslib-1.9/htsfile /usr/bin
+
+	# install minimap2
+	cd /opt/bin
+
+	git clone https://github.com/lh3/minimap2.git
+	cd minimap2 && make
+
+	cp minimap2 /usr/bin
+
+	#>> Install poa2
+	cd /opt/bin
+
+	git clone https://github.com/tanghaibao/bio-pipeline.git
+	cd bio-pipeline
+	cd poaV2
+	make poa
+
+	cp poa /usr/bin
+
+	#>> Install racon
+	cd /opt/bin
+
+	git clone --recursive https://github.com/lbcb-sci/racon.git racon
+	cd racon
+	mkdir build
+	cd build
+	cmake -DCMAKE_BUILD_TYPE=Release ..
+	make
+	cp bin/racon /usr/bin
+
+	#>> Install fastp
+	cd /opt/bin
+
+	# get source (you can also use browser to download from master or releases)
+	git clone https://github.com/OpenGene/fastp.git
+
+	# build
+	cd fastp  
+	make
+	# Install
+	sudo make install
+	cp fastp /usr/bin
+
+	cd /opt/bin
+
+
+	#> setup Dos2unix
+	wget https://waterlan.home.xs4all.nl/dos2unix/dos2unix-7.4.1.tar.gz
+	tar -zxvf dos2unix-7.4.1.tar.gz
+	cd dos2unix-7.4.1
+	make
+	make check
+	make strip
+	make install
+	make clean
+	
+	cd /opt/bin
+	git clone https://github.com/ucagenomix/sicelore.git
+	cd sicelore
+	sudo chmod 770 Jar/*.jar
+	sudo chmod 770 Perl/pbsflow.pl
+	
+%runscript
+	echo ">>>> Running SiCeLoRe singularity!"
+
+	export PATH="$PATH:/opt/bin:/usr/bin:"
+	
+	
+	
+
+	
