@@ -3,19 +3,18 @@ From:nfcore/base
 
 %labels
 	MAINTAINER Per Brattås <per.brattas@med.lu.se>
-	DESCRIPTION Singularity container Cellranger-ATAC
+	DESCRIPTION Singularity container for iCell8x analysis (mappa)
 	VERSION 0.0.1
 
 %environment
-	PATH=/opt/cellranger-3.1.0:/opt/bin:$PATH
+	PATH=/opt/mappa/:/opt/bin:$PATH
 
 %setup
-	cp -R /data/bnf/sw/cellranger-3.1.0 ${SINGULARITY_ROOTFS}/opt
 	cp -R /data/bnf/sw/fastqc/FastQC_0.11.5 ${SINGULARITY_ROOTFS}/opt
-	cp --preserve=timestamp -R /data/bnf/ref/cellranger/refdata-cellranger-GRCh38-3.0.0 ${SINGULARITY_ROOTFS}/opt
 	
 %files
-	/data/bnf/sw/bcl2fastq2-v2.20.0.422-Source.tar.gz /opt   
+	/data/bnf/sw/mappa /opt   
+	/data/bnf/sw/bcl2fastq2-v2.20.0.422-Source.tar.gz /opt
 
 %post
 	rm -rf /var/lib/apt/lists/*
@@ -24,11 +23,16 @@ From:nfcore/base
 	apt -y install libz-dev build-essential gettext cmake libxml2-dev libcurl4-openssl-dev libssl-dev make libbz2-dev libboost-dev python3-pip sudo
 
 	mkdir -p /usr/share/man/man1
-	
-	sudo apt -y install default-jre
+	mkdir /opt/bin
 
+	# Link fastqc 
+	ln -s /opt/FastQC_0.11.5/fastqc /opt/bin/fastqc
+	
 	# Setup multiqc
 	pip3 install multiqc
+
+	# Set mappa as environment variable
+	export MAPPA_HOME=/opt/mappa/
 
 	# Setup bcl2fastq
 	export TMP=/tmp
@@ -36,7 +40,6 @@ From:nfcore/base
 	export BUILD=${TMP}/bcl2fastq2-v2.20.0-build
 	export INSTALL_DIR=${SINGULARITY_ROOTFS}/opt/bcl2fastq2-v2.20.0
 
-	mkdir /opt/bin
         mkdir /opt/bcl2fastq
         cd /opt/bcl2fastq
         mkdir build
@@ -51,7 +54,7 @@ From:nfcore/base
         make
         make install
 
-	# Link fastqc 
-	ln -s /opt/FastQC_0.11.5/fastqc /opt/bin/fastqc
 
 	
+
+
